@@ -1,0 +1,55 @@
+[project]
+name = "capability-gated-deployment"
+version = "0.1.0"
+description = "Capability-gated (least-privilege) language models: rank-indexed low-rank MLPs, next-token-prediction fine-tuning, and inference-time rank gating."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "accelerate>=1.12.0",
+    "datasets>=4.4.1",
+    "matplotlib>=3.10.8",
+    "numpy>=2.3.3",
+    "safetensors>=0.7.0",
+    # Upper bound: the CUDA 12.4 wheel index (see [tool.uv.sources] below) tops
+    # out at torch 2.6.x; newer torch ships only cu126+ wheels that need a newer
+    # driver than the 12.4 common on rented GPUs.
+    "torch>=2.6.0,<2.7",
+    "tqdm>=4.67.1",
+    "transformers>=4.57.3",
+]
+
+[dependency-groups]
+# uv sync --group eval     -> selective-suppression search + MMLU rank sweeps
+#                             (capability_gated.suppression_search / mlp_rank_sweep)
+eval = ["lm-eval>=0.4.9.2", "peft>=0.18.0"]
+# uv sync --group dev      -> notebook kernel, linting, type-checking
+dev = ["ipykernel>=7.1.0", "mypy>=1.19.0", "nb-clean>=4.0.1", "ruff>=0.14.9"]
+# uv sync --group logging  -> Weights & Biases logging (finetune(report_to="wandb"))
+logging = ["wandb>=0.23.1"]
+
+# Non-package project: `uv sync` installs the dependencies
+# into .venv and you import `capability_gated` by running from the repo root.
+[tool.uv]
+package = false
+
+# Rented GPU hosts commonly run NVIDIA driver 12.4 (e.g. 550.x). PyPI's default
+# torch ships CUDA 13 wheels that can't initialise on those drivers -- torch then
+# silently falls back to CPU. Pin torch to the CUDA 12.4 wheel index on Linux
+# (cu124 wheels are forward-compatible with newer drivers too); on macOS, where
+# there is no CUDA, fall back to PyPI so local `uv sync` still works.
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu124", marker = "sys_platform == 'linux'" }]
+
+[tool.ruff]
+exclude = [".venv"]
+fix = true
+line-length = 88
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["N812", "D", "FBT001", "FBT002", "N806", "T201"]

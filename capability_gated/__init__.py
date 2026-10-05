@@ -1,0 +1,211 @@
+"""capability_gated: fine-tune LLMs as capability-gated (least-privilege) models.
+
+Replace a model's MLP linears with rank-indexed low-rank layers, fine-tune them
+with a multi-rank objective, then gate capability at inference by setting the
+active rank -- globally, per transformer block, or per MLP projection.
+"""
+
+from __future__ import annotations
+
+from .analysis import (
+    benjamini_hochberg,
+    compute_delta_and_significance_masks,
+    plot_rank_drop_heatmaps,
+    sweep_payload_to_rank_reduced_dict,
+    sweep_payload_to_single_intervention_json,
+)
+from .artifacts import (
+    RunLog,
+    RunPaths,
+    format_table,
+    jsonable,
+    provenance,
+    save_figure,
+    sha256_file,
+    write_json,
+)
+from .attribution import (
+    AttributionResult,
+    AttributionSpec,
+    FluencyPriceMap,
+    Probe,
+    ProbeTable,
+    RankAblationAttributor,
+    ScoreMaps,
+    Shortlist,
+    build_score_maps,
+    build_shortlist,
+    estimate_fluency_prices,
+    load_candidate_ranks,
+    measure_probes,
+    run_attribution,
+    select_probes,
+    shortlists_to_json,
+)
+from .evaluation import evaluate_perplexity_at_rank
+from .lowrank import (
+    DynamicLowRankLinear,
+    decompose_and_replace,
+    find_max_rank,
+    load_text_causal_lm,
+    replace_linear_with_lowrank,
+    strip_non_text_towers,
+)
+from .mcq import (
+    CHANCE,
+    LETTERS,
+    MMLU_ADJACENT,
+    MMLU_DISTANT,
+    WMDP_EXPECTED_N,
+    WMDP_TASKS,
+    MCQEvaluator,
+    MCQItem,
+    MCQResult,
+    MemoisedMCQEvaluator,
+    PromptStyle,
+    SplitBLockedError,
+    SplitRegistry,
+    answer_logits,
+    answer_margin,
+    bootstrap_ci,
+    build_batches,
+    evaluate_batches,
+    fingerprint_items,
+    letter_token_ids,
+    load_item_level,
+    load_task,
+    pearsonr,
+    pool_mcq_results,
+    save_item_level,
+    spearmanr,
+    subject_for,
+    wilson_interval,
+)
+from .mlp_rank_sweep import TASK_GROUPS, run_mlp_rank_sweep
+from .ppl_blocks import load_or_build_ppl_blocks
+from .rank_control import (
+    attach_rank_control,
+    clear_component_masks,
+    get_transformer_blocks,
+    set_rank_all,
+    set_rank_for_block,
+    set_component_mask_for_named_module_at_block,
+    set_rank_for_named_module_at_block,
+)
+from .suppression_search import (
+    EvalSettings,
+    FluencyPrices,
+    MemoisedEvaluator,
+    TaskTradeoffObjective,
+    measure_fluency_prices,
+    optimise_task_suppression,
+)
+from .training import (
+    LowRankTrainer,
+    build_lowrank_model,
+    finetune,
+    geometric_rank_ladder,
+    load_lowrank_checkpoint,
+    prepare_lm_dataset,
+    save_lowrank_checkpoint,
+)
+
+__all__ = [
+    # low-rank layer + installation
+    "DynamicLowRankLinear",
+    "decompose_and_replace",
+    "replace_linear_with_lowrank",
+    "find_max_rank",
+    "load_text_causal_lm",
+    "strip_non_text_towers",
+    # rank-gating API
+    "load_or_build_ppl_blocks",
+    "set_rank_all",
+    "set_rank_for_block",
+    "set_rank_for_named_module_at_block",
+    "set_component_mask_for_named_module_at_block",
+    "clear_component_masks",
+    "get_transformer_blocks",
+    "attach_rank_control",
+    # training
+    "build_lowrank_model",
+    "prepare_lm_dataset",
+    "LowRankTrainer",
+    "finetune",
+    "save_lowrank_checkpoint",
+    "load_lowrank_checkpoint",
+    "geometric_rank_ladder",
+    # evaluation
+    "evaluate_perplexity_at_rank",
+    # sensitivity analysis
+    "benjamini_hochberg",
+    "compute_delta_and_significance_masks",
+    "plot_rank_drop_heatmaps",
+    "sweep_payload_to_rank_reduced_dict",
+    "sweep_payload_to_single_intervention_json",
+    # selective-suppression search (lm-eval optional)
+    "optimise_task_suppression",
+    "FluencyPrices",
+    "measure_fluency_prices",
+    "EvalSettings",
+    "MemoisedEvaluator",
+    "TaskTradeoffObjective",
+    # per-block / per-MLP rank sweep (lm-eval optional)
+    "run_mlp_rank_sweep",
+    "TASK_GROUPS",
+    # MCQ data + frozen splits + self-contained evaluator
+    "LETTERS",
+    "CHANCE",
+    "WMDP_TASKS",
+    "WMDP_EXPECTED_N",
+    "MMLU_ADJACENT",
+    "MMLU_DISTANT",
+    "MCQItem",
+    "PromptStyle",
+    "load_task",
+    "fingerprint_items",
+    "subject_for",
+    "SplitRegistry",
+    "SplitBLockedError",
+    "wilson_interval",
+    "bootstrap_ci",
+    "pearsonr",
+    "spearmanr",
+    "letter_token_ids",
+    "build_batches",
+    "answer_logits",
+    "answer_margin",
+    "evaluate_batches",
+    "pool_mcq_results",
+    "save_item_level",
+    "load_item_level",
+    "MCQResult",
+    "MCQEvaluator",
+    "MemoisedMCQEvaluator",
+    # rank-ablation attribution (mech-interp localisation)
+    "AttributionSpec",
+    "RankAblationAttributor",
+    "FluencyPriceMap",
+    "run_attribution",
+    "estimate_fluency_prices",
+    "AttributionResult",
+    "ScoreMaps",
+    "build_score_maps",
+    "Shortlist",
+    "build_shortlist",
+    "shortlists_to_json",
+    "load_candidate_ranks",
+    "Probe",
+    "select_probes",
+    "measure_probes",
+    "ProbeTable",
+    # artifact / run bookkeeping
+    "RunPaths",
+    "RunLog",
+    "provenance",
+    "jsonable",
+    "write_json",
+    "save_figure",
+    "sha256_file",
+    "format_table",
+]

@@ -1,0 +1,18 @@
+# Core dependencies for the capability_gated package.
+torch>=2.6.0
+transformers>=4.57.0
+datasets>=4.4.0
+accelerate>=1.12.0
+safetensors>=0.7.0
+numpy>=2.0.0
+tqdm>=4.67.0
+matplotlib>=3.10.0        # figures (analysis, attribution, scripts)
+
+# Optional: selective-suppression search + MMLU rank sweeps
+#   (capability_gated.suppression_search / capability_gated.mlp_rank_sweep).
+#   Imported lazily, so the package imports fine without these installed.
+# lm-eval>=0.4.9
+# peft>=0.18.0
+
+# Optional: experiment logging.
+# wandb>=0.23.1  # uncomment to enable Weights & Biases logging (report_to="wandb")

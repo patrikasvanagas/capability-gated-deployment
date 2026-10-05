@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Environments & tooling
+.venv/
+.ruff_cache/
+.mypy_cache/
+
+# Model / run artifacts
+runs/
+sweep_results/
+trained_results/
+checkpoints/
+saved_weights/
+*.safetensors
+
+# Mech-interp artifacts -- except the frozen WMDP/MMLU split indices, which the
+# statistical protocol requires to be committed and released with the code.
+# (Ignore the directory's *contents*, not the directory: an excluded directory
+# is never descended into, which would make the negation dead.)
+mech_interp_results/*
+!mech_interp_results/splits_v1.json
+
+# Logging
+wandb/
+
+# Local secrets and scratch
+.env
+tmp/
+.DS_Store
